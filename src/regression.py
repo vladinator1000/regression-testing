@@ -1,10 +1,12 @@
 import os
+import random
 from re import sub
-from numpy import trapz, array
 from pprint import pprint
+from matplotlib import pyplot
 
+#  Parse data
 __location__ = os.path.realpath(
-    os.path.join(os.getcwd(), os.path.dirname(__file__))
+	os.path.join(os.getcwd(), os.path.dirname(__file__))
 )
 
 txtFile = os.path.join(__location__, 'data-small.txt')
@@ -12,25 +14,24 @@ txtFile = os.path.join(__location__, 'data-small.txt')
 data = {}
 currentKey = ''
 for line in open(txtFile, 'r'):
-    text = line.strip().replace(':', '')
+	text = line.strip().replace(':', '')
 
-    if 'unit' in text:
-        currentKey = text
-        data[currentKey] = []
+	if 'unit' in text:
+		#  Format text a bit
+		currentKey = text.replace('unitest', 'test')
+		data[currentKey] = []
 
-    elif 'v' not in text:
-        data[currentKey].append(int(text))
-
-
-pprint(data)
-sort = sorted(data, key = lambda key: int(sub('[^0-9]','', key)))
-# pprint(sort)
+	elif 'v' not in text:
+		data[currentKey].append(int(text))
 
 
-# y = [5, 20, 4, 18, 19, 18, 7, 4]
-#
-# # Compute the area using the composite trapezoidal rule.
-# # https://en.wikipedia.org/wiki/Trapezoidal_rule
-#
-# for i in range(5):
-#     print(trapz(y))
+sampleKeys = random.sample(list(data), 5)
+
+# sums = map(lambda key: sum(data[key]), sampleKeys)
+# pprint(sums)
+
+for key in sampleKeys:
+	print()
+
+# Each solution has 5 tests
+# Get APFD for each test (https://imgur.com/a/pLTxz)
