@@ -1,7 +1,9 @@
 import os
 import random
 from pprint import pprint
-# from matplotlib import pyplot
+from copy import deepcopy
+from itertools import chain
+from collections import OrderedDict
 
 # Parse .txt file
 __location__ = os.path.realpath(
@@ -33,7 +35,6 @@ def APFD(tests = [[]]):
 
 	# Initial list of zeros
 	faultsFound = [0 for i in range(numberOfFaults)]
-	
 
 	for faults in tests:
 		for index, fault in enumerate(faults):
@@ -41,8 +42,10 @@ def APFD(tests = [[]]):
 				# Add to index sum (counting from 1) 
 				sumOfFaultIndexes += index + 1
 				faultsFound[index] = 1
-			else:
-				sumOfFaultIndexes += numberOfFaults + 0.5
+	
+	# For every fault that wasn't found, add numberOfTests + 0.5 to the sum 
+	for i in range(faults.count(0)):	
+		sumOfFaultIndexes += numberOfTests + 0.5
 
 	return 1 - (sumOfFaultIndexes / (numberOfTests * numberOfFaults)) + (1 / (2 * numberOfTests))
 
@@ -57,20 +60,12 @@ def randomTestsFromData(howMany = 5):
 
 	return (names, tests, APFD(tests))
 
-# Generate population :
-# List of tuples in the form of ((testName1, ...), (test1, ...), fitness)
-# firstGeneration = []
-
-# for i in range(1):
-# 	firstGeneration.append(randomTestsFromData())
-
-
 def tournament(generation = []):
 	first = random.choice(generation)
 	second = random.choice(generation)
 
-	# Fitness at index 3, bigger is better
-	if first[3] > second[3]:
+	# Fitness at index 2, bigger is better
+	if first[2] > second[2]:
 		return first
 	else:
 		return second
@@ -80,7 +75,8 @@ def mutateGeneration(generation = [], probability = 0.15):
 
 	for chromosome in generation:
 		if random.random() < probability:
-			newChromosome = chromosome
+			# Copy, not reference
+			newChromosome = deepcopy(chromosome)
 
 			# Replace a test inside a chromosome with a random one 
 			randomIndex = random.randrange(len(chromosome[1]))
@@ -90,14 +86,95 @@ def mutateGeneration(generation = [], probability = 0.15):
 			newChromosome[1][randomIndex] = data[newTestName]
 
 			newGeneration.append(newChromosome)
-			
-			print(newChromosome, )
 		else:
 			newGeneration.append(chromosome)
+	
+	return newGeneration
 
-# mutateGeneration(firstGeneration, 1)
+def crossover(parent1, parent2, noCrossProbability = 0.05, fitnessFunction = APFD):
+	if random.random() < noCrossProbability:
+		return (parent1, parent2)
 
-test = [[0, 0, 0, 0, 0, 0, 1, 0, 0] for i in range(5)]
+	parentLength = len(parent1[0])
+	randomIndex = random.randrange(parentLength)
 
-# print(test)
-print(APFD(test))
+	newNames1 = list(chain(parent1[0][:randomIndex], parent2[0][randomIndex:]))
+	newNames2 = list(chain(parent2[0][:randomIndex], parent1[0][randomIndex:]))
+
+
+	def removeDuplicates(values):
+		output = []
+		seen = set()
+		for value in values:
+			# If value has not been encountered yet,
+			# add it to both list and set.
+			if (value) not in seen:
+				output.append(value)
+				seen.add(value)
+		return output
+
+	newNames1 = removeDuplicates(newNames1)
+	newNames1 = removeDuplicates(newNames1)
+
+	# Fill in arrays until long as parents 
+	while len(newNames1) != parentLength:
+		lengthDifference = parentLength - len(newNames1)
+
+		for item in random.sample(list(data), lengthDifference):
+			newNames1.append(item)
+
+		newNames1 = removeDuplicates(newNames1)
+
+	while len(newNames2) != parentLength:
+		lengthDifference = parentLength - len(newNames2)
+
+		for item in random.sample(list(data), lengthDifference):
+			newNames2.append(item)
+
+		newNames2 = removeDuplicates(newNames2)
+	
+	newTests1 = []
+	newTests2 = []
+
+	for itemA, itemB in zip(newNames1, newNames2):
+		newTests1.append(data[itemA])
+		newTests2.append(data[itemB])
+
+	return (
+		(newNames1, newTests1, APFD(newTests1)),
+		(newNames2, newTests2, APFD(newTests2)),
+	)
+
+def generatePopulation(old = [], currentGeneration = 0, maxGenerations = 20, selectionFunction = tournament):
+	new = []
+
+	fittest = max(old, key = lambda item: item[2])
+	print('\n')
+	print('Generation {}, fittest: {}'.format(currentGeneration, fittest[2]))
+
+	if currentGeneration < maxGenerations:
+		while len(new) < len(old):
+			children = crossover(selectionFunction(old), selectionFunction(old))
+			for child in children:
+				new.append(child)
+
+		mutated = mutateGeneration(new)
+		return generatePopulation(mutated, currentGeneration + 1, maxGenerations, selectionFunction = selectionFunction)
+
+	return {
+		'currentGeneration': currentGeneration,
+		'selection': selectionFunction.__name__,
+		'population': old
+	}
+
+
+# Generate initial population :
+# List of tuples in the form of ((testName1, ...), (test1, ...), fitness)
+population = []
+
+for i in range(50):
+	population.append(randomTestsFromData())
+
+
+result = generatePopulation(population)
+pprint(result)
