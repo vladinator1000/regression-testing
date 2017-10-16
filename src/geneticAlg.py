@@ -4,6 +4,7 @@ import csv
 from pprint import pprint
 from copy import deepcopy
 from itertools import chain
+from matplotlib import pyplot
 
 sys.setrecursionlimit(1500)
 
@@ -161,9 +162,13 @@ def generatePopulation(
 	selectionFunction = tournament,
 	mutationRate = 0.05,
 	noCrossRate = 0.05,
-	data = {}
+	data = {},
+	oldFittest = ([], [], 0.0),
+	fitnessDeltas = [],
+	name = ''
 ):
 	fittest = max(old, key = lambda item: item[2])
+	fitnessDifference = fittest[2] - oldFittest[2]
 
 	print('\n')
 	print(fittest[0])
@@ -171,7 +176,7 @@ def generatePopulation(
 	for i in range(4):
 		print(fittest[1][i])
 	print('...')
-	print('Generation {}, fittest: {}'.format(currentGeneration, fittest[2]))
+	print('Generation {}, fittest: {}, delta: {}'.format(currentGeneration, fittest[2], fitnessDifference))
 
 	new = []
 
@@ -192,23 +197,53 @@ def generatePopulation(
 			mutateGeneration(new, probability = mutationRate, data = data),
 			currentGeneration + 1,
 			maxGenerations,
-			selectionFunction = selectionFunction,
-			data = data
+			mutationRate = mutationRate,
+			noCrossRate = noCrossRate,
+			data = data,
+			oldFittest = fittest,
+			fitnessDeltas = fitnessDeltas + [fitnessDifference],
+			name = name,
 		)
 
 	return {
 		'currentGeneration': currentGeneration,
 		'selection': selectionFunction.__name__,
-		'population': old
+		'population': old,
+		'deltas': fitnessDeltas,
+		'name': name
 	}
 
 
 
-# Generate initial population :
+# Generate initial populations:
 # List of tuples in the form of ((testName1, ...), (test1, ...), fitness)
-population = []
+smallPopulation = []
+bigPopulation = []
 
-for i in range(1000):
-	population.append(randomTestsFromData(howMany = 20, data = dataBig))
+for i in range(500):
+	bigPopulation.append(randomTestsFromData(howMany = 20, data = dataBig))
+	smallPopulation.append(randomTestsFromData(howMany = 5, data = dataSmall))
 
-result = generatePopulation(population, maxGenerations = 1000, data = dataBig)
+
+results = [
+	generatePopulation(smallPopulation, maxGenerations = 50, data = dataSmall, name = 'Small Dataset'),
+
+	generatePopulation(
+		bigPopulation,
+		maxGenerations = 50,
+		mutationRate = 0.04,
+		noCrossRate = 0.15,
+		data = dataBig,
+		name = 'Big Dataset'
+	)
+]
+
+
+for i, result in enumerate(results):
+	pyplot.figure(i)
+	pyplot.suptitle('Improvement Rate in {}'.format(result['name']))
+	pyplot.xlabel('Generation')
+	pyplot.ylabel('Fitness Improvement')
+	pyplot.plot(result['deltas'])
+
+pyplot.show()
