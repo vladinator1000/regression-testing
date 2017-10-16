@@ -26,30 +26,30 @@ for line in open(txtFile, 'r'):
 		data[currentKey].append(int(text))
 
 
-# https://imgur.com/a/pLTxz 
+# https://imgur.com/a/pLTxz
 # Average Percentage of Faults Detected (Pandey and Shrivastava, 2011):
 def APFD(tests = [[]]):
 	numberOfTests = len(tests)
 	numberOfFaults = len(tests[0])
-	sumOfFaultIndexes = 0
+	sumOfTestPositions = 0.0
 
-	# Initial list of zeros
-	faultsFound = [0 for i in range(numberOfFaults)]
+	# Keep track of current faults found
+	faultsFoundBuffer = [0 for i in range(numberOfFaults)]
 
-	for faults in tests:
-		for index, fault in enumerate(faults):
-			if fault == 1 and faultsFound[index] == 0:
-				# Add to index sum (counting from 1) 
-				sumOfFaultIndexes += index + 1
-				faultsFound[index] = 1
-	
-	# For every fault that wasn't found, add numberOfTests + 0.5 to the sum 
-	for i in range(faults.count(0)):	
-		sumOfFaultIndexes += numberOfTests + 0.5
+	for testIndex, testCase in enumerate(tests):
+		for faultIndex, fault in enumerate(testCase):
+			if fault == 1 and faultsFoundBuffer[faultIndex] == 0:
+				sumOfTestPositions += testIndex + 1
+				faultsFoundBuffer[faultIndex] = 1
 
-	return 1 - (sumOfFaultIndexes / (numberOfTests * numberOfFaults)) + (1 / (2 * numberOfTests))
+	# For every fault that wasn't found, add numberOfTests + 0.5 to the sum
+	# https://i.imgur.com/u262XEv.jpg <-- here's why
+	for i in range(faultsFoundBuffer.count(0)):
+		sumOfTestPositions += numberOfTests + 0.5
 
-# This will make up our population 
+	return 1.0 - (sumOfTestPositions / (numberOfTests * numberOfFaults)) + (1.0 / (2.0 * numberOfTests))
+
+# This will make up our population
 def randomTestsFromData(howMany = 5):
 	names = []
 	tests = []
@@ -78,7 +78,7 @@ def mutateGeneration(generation = [], probability = 0.15):
 			# Copy, not reference
 			newChromosome = deepcopy(chromosome)
 
-			# Replace a test inside a chromosome with a random one 
+			# Replace a test inside a chromosome with a random one
 			randomIndex = random.randrange(len(chromosome[1]))
 			newTestName = random.choice(list(data))
 
@@ -88,7 +88,7 @@ def mutateGeneration(generation = [], probability = 0.15):
 			newGeneration.append(newChromosome)
 		else:
 			newGeneration.append(chromosome)
-	
+
 	return newGeneration
 
 def crossover(parent1, parent2, noCrossProbability = 0.05, fitnessFunction = APFD):
@@ -116,7 +116,7 @@ def crossover(parent1, parent2, noCrossProbability = 0.05, fitnessFunction = APF
 	newNames1 = removeDuplicates(newNames1)
 	newNames1 = removeDuplicates(newNames1)
 
-	# Fill in arrays until long as parents 
+	# Fill in arrays until long as parents
 	while len(newNames1) != parentLength:
 		lengthDifference = parentLength - len(newNames1)
 
@@ -132,7 +132,7 @@ def crossover(parent1, parent2, noCrossProbability = 0.05, fitnessFunction = APF
 			newNames2.append(item)
 
 		newNames2 = removeDuplicates(newNames2)
-	
+
 	newTests1 = []
 	newTests2 = []
 
@@ -145,12 +145,15 @@ def crossover(parent1, parent2, noCrossProbability = 0.05, fitnessFunction = APF
 		(newNames2, newTests2, APFD(newTests2)),
 	)
 
-def generatePopulation(old = [], currentGeneration = 0, maxGenerations = 20, selectionFunction = tournament):
+def generatePopulation(old = [], currentGeneration = 0, maxGenerations = 500, selectionFunction = tournament):
 	new = []
 
 	fittest = max(old, key = lambda item: item[2])
 	print('\n')
-	print('Generation {}, fittest: {}'.format(currentGeneration, fittest[2]))
+	print(fittest[0])
+	pprint(fittest[1])
+	print('Generation {},fittest: {}'.format(currentGeneration, fittest[2]))
+
 
 	if currentGeneration < maxGenerations:
 		while len(new) < len(old):
@@ -167,14 +170,13 @@ def generatePopulation(old = [], currentGeneration = 0, maxGenerations = 20, sel
 		'population': old
 	}
 
-
+#
 # Generate initial population :
 # List of tuples in the form of ((testName1, ...), (test1, ...), fitness)
 population = []
 
-for i in range(50):
+for i in range(500):
 	population.append(randomTestsFromData())
 
 
 result = generatePopulation(population)
-pprint(result)
