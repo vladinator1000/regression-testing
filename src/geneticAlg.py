@@ -1,29 +1,37 @@
-import os
+import os, sys
 import random
+import csv
 from pprint import pprint
 from copy import deepcopy
 from itertools import chain
-from collections import OrderedDict
 
-# Parse .txt file
+sys.setrecursionlimit(1500)
+
+# Parse .txt files
 __location__ = os.path.realpath(
 	os.path.join(os.getcwd(), os.path.dirname(__file__))
 )
 
-txtFile = os.path.join(__location__, 'data-small.txt')
+smallTxtFile = os.path.join(__location__, 'data-small.txt')
+bigTxtFile = os.path.join(__location__, 'data-big.txt')
 
-data = {}
+
+dataSmall = {}
 currentKey = ''
-for line in open(txtFile, 'r'):
+for line in open(smallTxtFile, 'r'):
 	text = line.strip().replace(':', '')
 
 	if 'unit' in text:
 		#  Format text a bit
 		currentKey = text.replace('unitest', 'test')
-		data[currentKey] = []
+		dataSmall[currentKey] = []
 
 	elif 'v' not in text:
-		data[currentKey].append(int(text))
+		dataSmall[currentKey].append(int(text))
+
+with open(bigTxtFile, mode='r') as inFile:
+	reader = csv.reader(inFile)
+	dataBig = {rows[0]:list(map(int, rows[1:])) for rows in reader}
 
 
 # https://imgur.com/a/pLTxz
@@ -50,7 +58,7 @@ def APFD(tests = [[]]):
 	return 1.0 - (sumOfTestPositions / (numberOfTests * numberOfFaults)) + (1.0 / (2.0 * numberOfTests))
 
 # This will make up our population
-def randomTestsFromData(howMany = 5):
+def randomTestsFromData(howMany = 5, data = {}):
 	names = []
 	tests = []
 
@@ -70,7 +78,7 @@ def tournament(generation = []):
 	else:
 		return second
 
-def mutateGeneration(generation = [], probability = 0.15):
+def mutateGeneration(generation = [], probability = 0.15, data = {}):
 	newGeneration = []
 
 	for chromosome in generation:
@@ -91,8 +99,8 @@ def mutateGeneration(generation = [], probability = 0.15):
 
 	return newGeneration
 
-def crossover(parent1, parent2, noCrossProbability = 0.05, fitnessFunction = APFD):
-	if random.random() < noCrossProbability:
+def crossover(parent1, parent2, noCrossRate = 0.10, fitnessFunction = APFD, data = {}):
+	if random.random() < noCrossRate:
 		return (parent1, parent2)
 
 	parentLength = len(parent1[0])
@@ -140,29 +148,53 @@ def crossover(parent1, parent2, noCrossProbability = 0.05, fitnessFunction = APF
 		newTests1.append(data[itemA])
 		newTests2.append(data[itemB])
 
+	# Tuple of tuples
 	return (
 		(newNames1, newTests1, APFD(newTests1)),
 		(newNames2, newTests2, APFD(newTests2)),
 	)
 
-def generatePopulation(old = [], currentGeneration = 0, maxGenerations = 500, selectionFunction = tournament):
-	new = []
-
+def generatePopulation(
+	old = [],
+	currentGeneration = 0,
+	maxGenerations = 500,
+	selectionFunction = tournament,
+	mutationRate = 0.05,
+	noCrossRate = 0.05,
+	data = {}
+):
 	fittest = max(old, key = lambda item: item[2])
+
 	print('\n')
 	print(fittest[0])
-	pprint(fittest[1])
-	print('Generation {},fittest: {}'.format(currentGeneration, fittest[2]))
+	# First 4 rows of test cases
+	for i in range(4):
+		print(fittest[1][i])
+	print('...')
+	print('Generation {}, fittest: {}'.format(currentGeneration, fittest[2]))
 
+	new = []
 
 	if currentGeneration < maxGenerations:
 		while len(new) < len(old):
-			children = crossover(selectionFunction(old), selectionFunction(old))
+			# Crossover returns tuple of two
+			children = crossover(
+				selectionFunction(old),
+				selectionFunction(old),
+				noCrossRate = noCrossRate,
+				data = data
+			)
+
 			for child in children:
 				new.append(child)
 
-		mutated = mutateGeneration(new)
-		return generatePopulation(mutated, currentGeneration + 1, maxGenerations, selectionFunction = selectionFunction)
+		return generatePopulation(
+			mutateGeneration(new, probability = mutationRate, data = data),
+			currentGeneration + 1,
+			maxGenerations,
+			selectionFunction = selectionFunction,
+			data = data
+		)
 
 	return {
 		'currentGeneration': currentGeneration,
@@ -170,13 +202,13 @@ def generatePopulation(old = [], currentGeneration = 0, maxGenerations = 500, se
 		'population': old
 	}
 
-#
+
+
 # Generate initial population :
 # List of tuples in the form of ((testName1, ...), (test1, ...), fitness)
 population = []
 
-for i in range(500):
-	population.append(randomTestsFromData())
+for i in range(1000):
+	population.append(randomTestsFromData(howMany = 20, data = dataBig))
 
-
-result = generatePopulation(population)
+result = generatePopulation(population, maxGenerations = 1000, data = dataBig)
