@@ -13,5 +13,10 @@ def randomChromosomeFromData(howMany = 5, data = {}):
 
 	return (names, tests, APFD(tests))
 
-def generateRandomSolution():
-	return {}
+def generateRandomSolution(previousBest = (), data = {}, name = ''):
+
+	return {
+		'currentGeneration': [],
+		'deltas': [],
+		'name': name
+	}

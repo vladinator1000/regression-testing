@@ -17,14 +17,14 @@ def tournament(generation = [], probabilityFitterWins = 0.8):
 			return first
 		else:
 			return second
-	
+
 	else:
 		if first[2] < second[2]:
 			return first
 		else:
 			return second
 
- 
+
 def mutateGeneration(generation = [], probability = 0.15, data = {}):
 	newGeneration = []
 
@@ -153,7 +153,6 @@ def generatePopulation(
 
 	return {
 		'currentGeneration': currentGeneration,
-		'selection': selectionFunction.__name__,
 		'population': old,
 		'deltas': fitnessDeltas,
 		'name': name
