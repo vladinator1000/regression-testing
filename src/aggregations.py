@@ -1,3 +1,4 @@
+import os
 from pprint import pprint
 from matplotlib import pyplot
 from numpy import array, transpose, mean, std
@@ -6,16 +7,12 @@ from data import dataSmall, dataBig
 from randomSolution import randomChromosomeFromData, generateRandomSolution
 from geneticAlg import generatePopulation
 
-# test = array([
-# 	[11, 12, 13],
-# 	[21, 22, 23],
-# 	[31, 32, 33],
-# 	[41, 420, 4300]
-# ])
-# print(transpose(test))
-#
+# Configure here, use smaller numbers if you want it to run faster
+ITERATIONS = 100
+MAX_GENERATIONS = 100
+MAX_POPULATION = 500
 
-def generateAlgSolution(maxGenerations = 50, maxPopulation = 50, data = {}):
+def generateAlgSolution(maxGenerations = 50, maxPopulation = MAX_POPULATION, data = {}):
 	population = []
 
 	isBigDataset = len(data) > 300
@@ -35,7 +32,7 @@ def generateAlgSolution(maxGenerations = 50, maxPopulation = 50, data = {}):
 		dataName = 'Big Dataset' if isBigDataset else 'Small Dataset'
 	)
 
-def generateRandSolution(maxGenerations = 50, maxPopulation = 50, data = {}):
+def generateRandSolution(maxGenerations = 50, maxPopulation = MAX_POPULATION, data = {}):
 	isBigDataset = len(data) > 300
 
 	return generateRandomSolution(
@@ -46,12 +43,6 @@ def generateRandSolution(maxGenerations = 50, maxPopulation = 50, data = {}):
 	)
 
 
-
-smallAlgSolutions = []
-bigAlgSolutions = []
-smallRandSolutions = []
-bigRandSolutions = []
-
 results = {
 	'smallAlgSolutions': [],
 	'bigAlgSolutions': [],
@@ -59,15 +50,24 @@ results = {
 	'bigRandSolutions': []
 }
 
-for i in range(100):
-	results['smallAlgSolutions'].append(generateAlgSolution(data = dataSmall))
-	results['bigAlgSolutions'].append(generateAlgSolution(data = dataBig))
-	results['smallRandSolutions'].append(generateAlgSolution(data = dataSmall))
-	results['bigRandSolutions'].append(generateAlgSolution(data = dataBig))
+
+print('Running algorithms on all datasets')
+print()
+# How many times to run algorithms
+for i in range(ITERATIONS):
+	print('Iteration {}'.format(i))
+	results['smallAlgSolutions'].append(generateAlgSolution(data = dataSmall, maxGenerations = MAX_GENERATIONS))
+	results['bigAlgSolutions'].append(generateAlgSolution(data = dataBig, maxGenerations = MAX_GENERATIONS))
+	results['smallRandSolutions'].append(generateRandomSolution(data = dataSmall, maxGenerations = MAX_GENERATIONS))
+	results['bigRandSolutions'].append(generateRandSolution(data = dataBig, maxGenerations = MAX_GENERATIONS))
 
 
-
+plotsPath = os.path.dirname(os.path.realpath(__file__)) + '/../aggregatePlots/'
 aggregateStats = []
+
+print('Aggregating Stats for Each Iteration')
+print('Plots saved in aggregatePlots folder in repository root.')
+print('\n Ctrl + C to close all figures.')
 
 for i, result in enumerate(results):
 	stats = {
@@ -92,11 +92,8 @@ for i, result in enumerate(results):
 		for column in transpose(stats[stat]):
 			aggregateStats[stat].append(mean(column))
 
-
-
-
 	pyplot.figure(i)
-	pyplot.suptitle('Aggregate Fitness in {}'.format(result))
+	pyplot.suptitle('Aggregate Fitness in {} \n for {} Iterations'.format(result, ITERATIONS))
 	pyplot.xlabel('Generation')
 	pyplot.ylabel('Fitness')
 
@@ -104,13 +101,7 @@ for i, result in enumerate(results):
 		pyplot.plot(aggregateStats[aggregate], label = aggregate)
 
 	pyplot.legend(loc='upper right')
-
+	pyplot.savefig(plotsPath + 'AggregateFitness{}'.format(result) + '.png')
 pyplot.show()
 
-# for solution in solutions:
-# 	for stat in solution['fitnessStats']:
-# 		stats[stat].append(solution['fitnessStats'][stat])
-	# print('\n')
-
-
-# pprint(stats['min'][:3])
+print('\n Done! \n ')

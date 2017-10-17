@@ -37,3 +37,7 @@ for i, solution in enumerate(solutions):
 	pyplot.legend(loc='upper right')
 
 pyplot.show()
+
+# This shows stats from only one iteration.
+# Check out aggregations.py if you want to run statistical aggregations
+# of multiple iterations of the algorithms.

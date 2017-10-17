@@ -17,7 +17,7 @@ def randomChromosomeFromData(testsInChromosome = 5, data = {}):
 # Each generation has 1 specimen
 def generateRandomSolution(
 	maxGenerations = 100,
-	testsInChromosome = '5',
+	testsInChromosome = 5,
 	data = {},
 	currentGeneration = 0,
 	fittest = ((), (), 0.0),
@@ -45,6 +45,7 @@ def generateRandomSolution(
 	if currentGeneration < maxGenerations:
 		return generateRandomSolution(
 			maxGenerations = maxGenerations,
+			testsInChromosome = testsInChromosome,
 			data = data,
 			currentGeneration = currentGeneration + 1,
 			fittest = newFittest,
