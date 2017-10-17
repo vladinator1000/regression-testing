@@ -6,12 +6,12 @@ __location__ = os.path.realpath(
 	os.path.join(os.getcwd(), os.path.dirname(__file__))
 )
 
-smallTxtFile = os.path.join(__location__, 'data-small.txt')
-bigTxtFile = os.path.join(__location__, 'data-big.txt')
+smallTxtFile = os.path.join(__location__, '../data-small.txt')
+bigTxtFile = os.path.join(__location__, '../data-big.txt')
 
 # Import this
 dataSmall = {}
- 
+
 currentKey = ''
 for line in open(smallTxtFile, 'r'):
 	text = line.strip().replace(':', '')

@@ -128,9 +128,9 @@ def generatePopulation(
 	# Fitness deltas between fittest specimen
 	fitnessDifference = newFittest[2] - fittest[2]
 
-	print('\n')
-	print('{}...'.format(newFittest[0][0: 7]))
-	print('Generation {}, fittest: {}, delta: {}'.format(currentGeneration, newFittest[2], fitnessDifference))
+	# print('\n')
+	# print('{}...'.format(newFittest[0][0: 7]))
+	# print('Generation {}, fittest: {}, delta: {}'.format(currentGeneration, newFittest[2], fitnessDifference))
 
 	new = []
 

@@ -4,11 +4,11 @@ from numpy import mean, std
 from APFD import APFD
 
 
-def randomChromosomeFromData(howMany = 5, data = {}):
+def randomChromosomeFromData(testsInChromosome = 5, data = {}):
 	names = []
 	tests = []
 
-	for testName in random.sample(list(data), howMany):
+	for testName in random.sample(list(data), testsInChromosome):
 		names.append(testName)
 		tests.append(data[testName])
 
@@ -17,6 +17,7 @@ def randomChromosomeFromData(howMany = 5, data = {}):
 # Each generation has 1 specimen
 def generateRandomSolution(
 	maxGenerations = 100,
+	testsInChromosome = '5',
 	data = {},
 	currentGeneration = 0,
 	fittest = ((), (), 0.0),
@@ -30,7 +31,7 @@ def generateRandomSolution(
 		'std': []
 	},
 ):
-	newChromosome = randomChromosomeFromData(5, data = data)
+	newChromosome = randomChromosomeFromData(testsInChromosome, data = data)
 
 	if newChromosome[2] > fittest[2]:
 		newFittest = newChromosome
