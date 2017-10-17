@@ -3,6 +3,8 @@ from sys import setrecursionlimit
 from pprint import pprint
 from copy import deepcopy
 from itertools import chain
+from numpy import mean, std
+
 from APFD import APFD
 
 setrecursionlimit(1500)
@@ -109,20 +111,26 @@ def generatePopulation(
 	mutationRate = 0.04,
 	noCrossRate = 0.15,
 	data = {},
-	oldFittest = ([], [], 0.0),
+	fittest = ((), (), 0.0),
 	fitnessDeltas = [],
-	name = ''
+	fittestForEachGen = [],
+	dataName = '',
+	fitnessStats = {
+		'min': [],
+		'max': [],
+		'mean': [],
+		'std': []
+	},
 ):
-	fittest = max(old, key = lambda item: item[2])
-	fitnessDifference = fittest[2] - oldFittest[2]
+	fitnessesForGen = list(map(lambda item: item[2], old))
+	newFittest = max(old, key = lambda item: item[2])
+
+	# Fitness deltas between fittest specimen
+	fitnessDifference = newFittest[2] - fittest[2]
 
 	print('\n')
-	print(fittest[0])
-	# First 4 rows of test cases
-	for i in range(4):
-		print(fittest[1][i])
-	print('...')
-	print('Generation {}, fittest: {}, delta: {}'.format(currentGeneration, fittest[2], fitnessDifference))
+	print('{}...'.format(newFittest[0][0: 7]))
+	print('Generation {}, fittest: {}, delta: {}'.format(currentGeneration, newFittest[2], fitnessDifference))
 
 	new = []
 
@@ -146,14 +154,24 @@ def generatePopulation(
 			mutationRate = mutationRate,
 			noCrossRate = noCrossRate,
 			data = data,
-			oldFittest = fittest,
+			fittest = newFittest,
 			fitnessDeltas = fitnessDeltas + [fitnessDifference],
-			name = name,
+			fittestForEachGen = fittestForEachGen + [newFittest[2]],
+			dataName = dataName,
+			fitnessStats = {
+				'min': fitnessStats['min'] + [min(fitnessesForGen)],
+				'max': fitnessStats['max'] + [max(fitnessesForGen)],
+				'mean': fitnessStats['mean'] + [mean(fitnessesForGen)],
+				'std': fitnessStats['std'] + [std(fitnessesForGen)]
+			}
 		)
 
 	return {
-		'currentGeneration': currentGeneration,
-		'population': old,
+		'generation': currentGeneration,
+		'fittest': fittest,
+		'fittestForEachGen': fittestForEachGen,
 		'deltas': fitnessDeltas,
-		'name': name
+		'dataName': dataName,
+		'name': 'Genetic Alg',
+		'fitnessStats': fitnessStats
 	}
