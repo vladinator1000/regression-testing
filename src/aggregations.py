@@ -1,6 +1,7 @@
 import os
 from pprint import pprint
 from matplotlib import pyplot
+from scipy.spatial.distance import cdist
 from numpy import array, transpose, mean, std
 
 from data import dataSmall, dataBig
@@ -9,7 +10,7 @@ from geneticAlg import generatePopulation
 
 # Configure here, use smaller numbers if you want it to run faster
 ITERATIONS = 100
-MAX_GENERATIONS = 100
+MAX_GENERATIONS = 50
 MAX_POPULATION = 500
 
 def generateAlgSolution(maxGenerations = 50, maxPopulation = MAX_POPULATION, data = {}):
@@ -62,12 +63,21 @@ for i in range(ITERATIONS):
 	results['bigRandSolutions'].append(generateRandSolution(data = dataBig, maxGenerations = MAX_GENERATIONS))
 
 
+print('\n Aggregating Stats for Each Iteration')
+print('Plots saved in aggregatePlots folder in repository root.')
+print('\n Ctrl + C to close all figures.')
+
 plotsPath = os.path.dirname(os.path.realpath(__file__)) + '/../aggregatePlots/'
 aggregateStats = []
 
-print('Aggregating Stats for Each Iteration')
-print('Plots saved in aggregatePlots folder in repository root.')
-print('\n Ctrl + C to close all figures.')
+
+# For euclidean distances
+# aggregatesPerAlgorithm = {
+# 	'smallAlg': {},
+# 	'bigAlg': {},
+# 	'smallRand': {},
+# 	'bigRand': {}
+# }
 
 for i, result in enumerate(results):
 	stats = {
@@ -92,6 +102,9 @@ for i, result in enumerate(results):
 		for column in transpose(stats[stat]):
 			aggregateStats[stat].append(mean(column))
 
+
+	aggregatesPerAlgorithm[result.replace('Solutions', '')] = aggregateStats
+
 	pyplot.figure(i)
 	pyplot.suptitle('Aggregate Fitness in {} \n for {} Iterations'.format(result, ITERATIONS))
 	pyplot.xlabel('Generation')
@@ -102,6 +115,8 @@ for i, result in enumerate(results):
 
 	pyplot.legend(loc='upper right')
 	pyplot.savefig(plotsPath + 'AggregateFitness{}'.format(result) + '.png')
+
+# TODO get euclidean distances between corresponding datasets
 pyplot.show()
 
 print('\n Done! \n ')
