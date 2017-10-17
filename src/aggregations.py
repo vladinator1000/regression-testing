@@ -72,12 +72,12 @@ aggregateStats = []
 
 
 # For euclidean distances
-# aggregatesPerAlgorithm = {
-# 	'smallAlg': {},
-# 	'bigAlg': {},
-# 	'smallRand': {},
-# 	'bigRand': {}
-# }
+aggregatesPerAlgorithm = {
+	'smallAlg': {},
+	'bigAlg': {},
+	'smallRand': {},
+	'bigRand': {}
+}
 
 for i, result in enumerate(results):
 	stats = {

@@ -12,8 +12,8 @@ smallPopulation = []
 bigPopulation = []
 
 for i in range(500):
-	smallPopulation.append(randomChromosomeFromData(howMany = 5, data = dataSmall))
-	bigPopulation.append(randomChromosomeFromData(howMany = 20, data = dataBig))
+	smallPopulation.append(randomChromosomeFromData(testsInChromosome = 5, data = dataSmall))
+	bigPopulation.append(randomChromosomeFromData(testsInChromosome = 20, data = dataBig))
 
 
 
