@@ -1,84 +1,30 @@
-import os, sys
 import random
-import csv
+from sys import setrecursionlimit
 from pprint import pprint
 from copy import deepcopy
 from itertools import chain
-from matplotlib import pyplot
+from APFD import APFD
 
-sys.setrecursionlimit(1500)
+setrecursionlimit(1500)
 
-# Parse .txt files
-__location__ = os.path.realpath(
-	os.path.join(os.getcwd(), os.path.dirname(__file__))
-)
-
-smallTxtFile = os.path.join(__location__, 'data-small.txt')
-bigTxtFile = os.path.join(__location__, 'data-big.txt')
-
-
-dataSmall = {}
-currentKey = ''
-for line in open(smallTxtFile, 'r'):
-	text = line.strip().replace(':', '')
-
-	if 'unit' in text:
-		#  Format text a bit
-		currentKey = text.replace('unitest', 'test')
-		dataSmall[currentKey] = []
-
-	elif 'v' not in text:
-		dataSmall[currentKey].append(int(text))
-
-with open(bigTxtFile, mode='r') as inFile:
-	reader = csv.reader(inFile)
-	dataBig = {rows[0]:list(map(int, rows[1:])) for rows in reader}
-
-
-# https://imgur.com/a/pLTxz
-# Average Percentage of Faults Detected (Pandey and Shrivastava, 2011):
-def APFD(tests = [[]]):
-	numberOfTests = len(tests)
-	numberOfFaults = len(tests[0])
-	sumOfTestPositions = 0.0
-
-	# Keep track of current faults found
-	faultsFoundBuffer = [0 for i in range(numberOfFaults)]
-
-	for testIndex, testCase in enumerate(tests):
-		for faultIndex, fault in enumerate(testCase):
-			if fault == 1 and faultsFoundBuffer[faultIndex] == 0:
-				sumOfTestPositions += testIndex + 1
-				faultsFoundBuffer[faultIndex] = 1
-
-	# For every fault that wasn't found, add numberOfTests + 0.5 to the sum
-	# https://i.imgur.com/u262XEv.jpg <-- here's why
-	for i in range(faultsFoundBuffer.count(0)):
-		sumOfTestPositions += numberOfTests + 0.5
-
-	return 1.0 - (sumOfTestPositions / (numberOfTests * numberOfFaults)) + (1.0 / (2.0 * numberOfTests))
-
-# This will make up our population
-def randomTestsFromData(howMany = 5, data = {}):
-	names = []
-	tests = []
-
-	for testName in random.sample(list(data), howMany):
-		names.append(testName)
-		tests.append(data[testName])
-
-	return (names, tests, APFD(tests))
-
-def tournament(generation = []):
+def tournament(generation = [], probabilityFitterWins = 0.8):
 	first = random.choice(generation)
 	second = random.choice(generation)
 
-	# Fitness at index 2, bigger is better
-	if first[2] > second[2]:
-		return first
+	if random.random() < probabilityFitterWins:
+		# Fitness at index 2, bigger is better
+		if first[2] > second[2]:
+			return first
+		else:
+			return second
+	
 	else:
-		return second
+		if first[2] < second[2]:
+			return first
+		else:
+			return second
 
+ 
 def mutateGeneration(generation = [], probability = 0.15, data = {}):
 	newGeneration = []
 
@@ -160,8 +106,8 @@ def generatePopulation(
 	currentGeneration = 0,
 	maxGenerations = 500,
 	selectionFunction = tournament,
-	mutationRate = 0.05,
-	noCrossRate = 0.05,
+	mutationRate = 0.04,
+	noCrossRate = 0.15,
 	data = {},
 	oldFittest = ([], [], 0.0),
 	fitnessDeltas = [],
@@ -212,38 +158,3 @@ def generatePopulation(
 		'deltas': fitnessDeltas,
 		'name': name
 	}
-
-
-
-# Generate initial populations:
-# List of tuples in the form of ((testName1, ...), (test1, ...), fitness)
-smallPopulation = []
-bigPopulation = []
-
-for i in range(500):
-	bigPopulation.append(randomTestsFromData(howMany = 20, data = dataBig))
-	smallPopulation.append(randomTestsFromData(howMany = 5, data = dataSmall))
-
-
-results = [
-	generatePopulation(smallPopulation, maxGenerations = 50, data = dataSmall, name = 'Small Dataset'),
-
-	generatePopulation(
-		bigPopulation,
-		maxGenerations = 50,
-		mutationRate = 0.04,
-		noCrossRate = 0.15,
-		data = dataBig,
-		name = 'Big Dataset'
-	)
-]
-
-
-for i, result in enumerate(results):
-	pyplot.figure(i)
-	pyplot.suptitle('Improvement Rate in {}'.format(result['name']))
-	pyplot.xlabel('Generation')
-	pyplot.ylabel('Fitness Improvement')
-	pyplot.plot(result['deltas'])
-
-pyplot.show()
